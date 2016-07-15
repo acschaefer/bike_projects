@@ -1,29 +1,71 @@
-/*
-  Blink
-  Turns on an LED on for one second, then off for one second, repeatedly.
-
-  Most Arduinos have an on-board LED you can control. On the Uno and
-  Leonardo, it is attached to digital pin 13. If you're unsure what
-  pin the on-board LED is connected to on your Arduino model, check
-  the documentation at http://www.arduino.cc
-
-  This example code is in the public domain.
-
-  modified 8 May 2014
-  by Scott Fitzgerald
- */
+// Grip heater control
+//
+// Copyright 2016 Alexander Schaefer
 
 
-// the setup function runs once when you press reset or power the board
-void setup() {
-  // initialize digital pin 13 as an output.
-  pinMode(13, OUTPUT);
+// Constants. /////////////////////////////////////////////////////////
+// Button debouncing time [ms].
+const int debounceTime = 100;
+
+// Duration of long button activation [ms].
+const int longActivation = 1000;
+
+// Number of heat levels.
+const int heatLevels = 6;
+
+// LED pin numbers.
+const int ledPin[nLeds-1] = {LED_BUILTIN, 12, 11, 10, 9};
+
+// Number of the pin connected to the button.
+const int buttonPin = 1;
+
+
+// Global variables. //////////////////////////////////////////////////
+// Number of LEDs lit.
+int heat = 0;
+
+
+// Functions. /////////////////////////////////////////////////////////
+// Determines the heat level depending on the duration of button activation.
+// Returns false if the button is not yet debounced, otherwise true.
+boolean determine_heat(int duration)
+{
+    // If the button is not yet debounced, return -1.
+    if (duration <= debounceTime)
+        return false;
+    
+    // If the user presses the button for a short time, increase the heat.
+    if (duration < longActivation)
+    {
+        heat = (heat + 1) % heatLevels;
+        return true;
+    }
+    
+    // If the user presses the button for a long time, reset the heat level.
+    heat = 0;
+    return true;
 }
 
-// the loop function runs over and over again forever
-void loop() {
-  digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1000);              // wait for a second
-  digitalWrite(13, LOW);    // turn the LED off by making the voltage LOW
-  delay(1000);              // wait for a second
+
+// Set up the controller after boot.
+void setup() 
+{
+    // Initialize the LED pins.
+    for (int i = 0; i < nLeds; ++i)
+        pinMode(ledPin[i], OUTPUT);
+  
+    // Initialize the button pin.
+    pinMode(buttonPin, INPUT);
+}
+
+
+// Infinite worker loop.
+void loop()
+{
+    // Sample the button state.
+    if (digitalRead(buttonPin) == HIGH)
+        heat = 5;
+  
+    delay();
+    milli();
 }
