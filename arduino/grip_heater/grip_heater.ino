@@ -2,6 +2,9 @@
 //
 // Copyright 2016 Alexander Schaefer
 
+// Include Button library.
+#include "Button.h"
+
 
 // Constants. /////////////////////////////////////////////////////////
 // Button debouncing time [ms].
@@ -13,22 +16,32 @@ const int longPress = 1000;
 // Number of heat levels.
 const int heatLevels = 6;
 
-// LED pin numbers.
-const int ledPin[nLeds-1] = {LED_BUILTIN, 12, 11, 10, 9};
-
-// Number of the pin connected to the button.
+// Pin numbers.
+const int leds = heatLevels - 1;
+const int ledPin[leds] = {LED_BUILTIN, 12, 11, 10, 9};
 const int buttonPin = 1;
+const int heaterPin = 0;
+
+// PWM period [ms].
+const int heatingPeriod = 5000;
 
 
 // Global variables. //////////////////////////////////////////////////
-// Number of LEDs lit.
+// Heat level.
 int heat = 0;
 
-// Button object.
+// Create Button object.
 Button button = Button(buttonPin, false, false, debounceTime);
 
 
 // Functions. /////////////////////////////////////////////////////////
+// Compute the heating duration in each PWM period in [ms].
+int heatingDuration()
+{
+    return heat / (heatLevels-1.0) * heatingPeriod;
+}
+
+
 // Set up the controller after boot.
 void setup() 
 {
@@ -48,11 +61,12 @@ void loop()
     button.read();
     
     // Adjust the heat level according to how long the button was pressed.
-    if (button.wasPressed())
-    {
-        if (button.pressedFor(longPress))
-            heat = 0;
-        else
-            heat = (heat + 1) & heatLevels;
-    }
+    heat = ((heat + button.wasPressed()) % heatLevels) * button.pressedFor(longPress);
+
+    // Visualize the heat level using the LEDs.
+    for (int i = 0; i < leds; ++i)
+        digitalWrite(ledPin[i], i<heat);
+
+    // If the heating duration is not yet over, heat the grips.
+    digitalWrite(heaterPin, (milli() % heatingPeriod) < heatingDuration());
 }
