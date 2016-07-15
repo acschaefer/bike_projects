@@ -1,7 +1,8 @@
-// Grip heater control
+// Grip heater control program
 //
 // Copyright 2016 Alexander Schaefer
 
+// Included libraries. ////////////////////////////////////////////////
 // Include Button library.
 #include "Button.h"
 
@@ -13,8 +14,9 @@ const int debounceTime = 50;
 // Duration of long button activation [ms].
 const int longPress = 1000;
 
-// Number of heat levels.
+// Number of heat levels and corresponding PWM duty cycles.
 const int heatLevels = 6;
+const double heatDutyCycle[heatLevels] = {0.0, 0.1, 0.2, 0.28, 0.35, 0.5};
 
 // Pin numbers.
 const int leds = heatLevels - 1;
@@ -38,7 +40,7 @@ Button button = Button(buttonPin, false, false, debounceTime);
 // Compute the heating duration in each PWM period in [ms].
 int heatingDuration()
 {
-    return heat / (heatLevels-1.0) * heatingPeriod;
+    return heatDutyCycle[heat] * heatingPeriod;
 }
 
 
