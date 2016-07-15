@@ -14,13 +14,16 @@ const int debounceTime = 50;
 // Duration of long button activation [ms].
 const int longPress = 1000;
 
+// LED brightness in [0; 255].
+const byte brightness = 0.6 * 255;
+
 // Number of heat levels and corresponding PWM duty cycles.
 const int heatLevels = 6;
 const double heatDutyCycle[heatLevels] = {0.0, 0.1, 0.2, 0.28, 0.35, 0.5};
 
 // Pin numbers.
 const int leds = heatLevels - 1;
-const int ledPin[leds] = {LED_BUILTIN, 12, 11, 10, 9};
+const int ledPin[leds] = {5, 6, 9, 10, 11};
 const int buttonPin = 1;
 const int heaterPin = 0;
 
@@ -53,6 +56,9 @@ void setup()
   
     // Initialize the button pin.
     pinMode(buttonPin, INPUT);
+    
+    // Initialize the heater pin.
+    pinMode(heaterPin, OUTPUT);
 }
 
 
@@ -67,7 +73,7 @@ void loop()
 
     // Visualize the heat level using the LEDs.
     for (int i = 0; i < leds; ++i)
-        digitalWrite(ledPin[i], i<heat);
+        analogWrite(ledPin[i], brightness * (i<heat));
 
     // If the heating duration is not yet over, heat the grips.
     digitalWrite(heaterPin, (milli() % heatingPeriod) < heatingDuration());
