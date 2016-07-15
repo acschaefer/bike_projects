@@ -5,10 +5,10 @@
 
 // Constants. /////////////////////////////////////////////////////////
 // Button debouncing time [ms].
-const int debounceTime = 100;
+const int debounceTime = 50;
 
 // Duration of long button activation [ms].
-const int longActivation = 1000;
+const int longPress = 1000;
 
 // Number of heat levels.
 const int heatLevels = 6;
@@ -24,29 +24,11 @@ const int buttonPin = 1;
 // Number of LEDs lit.
 int heat = 0;
 
+// Button object.
+Button button = Button(buttonPin, false, false, debounceTime);
+
 
 // Functions. /////////////////////////////////////////////////////////
-// Determines the heat level depending on the duration of button activation.
-// Returns false if the button is not yet debounced, otherwise true.
-boolean determine_heat(int duration)
-{
-    // If the button is not yet debounced, return -1.
-    if (duration <= debounceTime)
-        return false;
-    
-    // If the user presses the button for a short time, increase the heat.
-    if (duration < longActivation)
-    {
-        heat = (heat + 1) % heatLevels;
-        return true;
-    }
-    
-    // If the user presses the button for a long time, reset the heat level.
-    heat = 0;
-    return true;
-}
-
-
 // Set up the controller after boot.
 void setup() 
 {
@@ -62,10 +44,15 @@ void setup()
 // Infinite worker loop.
 void loop()
 {
-    // Sample the button state.
-    if (digitalRead(buttonPin) == HIGH)
-        heat = 5;
-  
-    delay();
-    milli();
+    // Update the button state.
+    button.read();
+    
+    // Adjust the heat level according to how long the button was pressed.
+    if (button.wasPressed())
+    {
+        if (button.pressedFor(longPress))
+            heat = 0;
+        else
+            heat = (heat + 1) & heatLevels;
+    }
 }
