@@ -62,12 +62,10 @@ void shine(byte brightness, byte n = leds)
 void setup() 
 {
     // Initialize pins.
-    for (byte i = 0; i < nLeds; ++i)
+    for (byte i = 0; i < leds; ++i)
         pinMode(ledPin[i], OUTPUT);
     pinMode(buttonPin, INPUT);
     pinMode(heaterPin, OUTPUT);
-    pinMode(heaterVoltageInPin, INPUT);
-    pinMode(heaterVoltageOutPin, INPUT);
     
     // Light all LEDs for a short time to show device is ready.
     shine(brightness);
@@ -82,16 +80,19 @@ void loop()
     // Adjust the heat level according to how long the button was pressed.
     button.read();
     if (button.wasPressed())
+    {
         if (heat == 0)
             heat = heatLevels - 1;
         else if (button.pressedFor(longPress))
             heat = 0;
         else
             --heat;
+    }
 
     // Visualize the heat level using the LEDs.
     shine(brightness, heat);
     
     // If the heating duration is not yet over, heat the grips.
-    digitalWrite(heaterPin, (milli()%heatingPeriod) < heatDutyCycle[heat]*heatingPeriod);
+    digitalWrite(heaterPin, (millis()%heatingPeriod) < heatDutyCycle[heat]*heatingPeriod);
 }
+
