@@ -1,21 +1,23 @@
 // Grip heater control program
 //
-// The grip heater consists of a button, five LEDs, and heated grips. 
-// It behaves as follows:
+// Hardware:
+// The grip heater consists of an Arduino Trinket Pro, a button, five LEDs, 
+// and heated grips.
+// 
+// Behavior:
 // When the button is first pressed, all LEDs are lit and the grips are heated
-// with maximum power. Each time the user presses the button again, one LED after
-// the other is switched off and the heating power is reduced. When the user
-// presses the button for at least one second, the LEDs and the heating are
-// switched off.
+// with maximum power. Each time the user presses the button again, one LED 
+// after the other is switched off and the heating power is reduced. When the 
+// user presses the button for at least one second, the LEDs and the heating 
+// are switched off.
 //
 // Copyright 2016 Alexander Schaefer
 
-// Included libraries. ////////////////////////////////////////////////
-// Include Button library for button debouncing.
+// Included libraries. /////////////////////////////////////////////////////////
+// Button handling and debouncing.
 #include "Button.h"
 
-
-// Constants. /////////////////////////////////////////////////////////
+// Constants. //////////////////////////////////////////////////////////////////
 // Button debouncing time [ms].
 const int debounceTime = 50;
 
@@ -30,7 +32,7 @@ const int flashDuration = 200;
 
 // Number of heat levels and corresponding PWM duty cycles.
 const byte heatLevels = 6;
-const float heatDutyCycle[heatLevels] = {0.0f, 0.10f, 0.20f, 0.28f, 0.35f, 0.50f};
+const float heatDutyCycle[heatLevels] = {0f, 0.10f, 0.20f, 0.28f, 0.35f, 0.50f};
 
 // Pin numbers.
 const byte leds = heatLevels - 1;
@@ -41,16 +43,14 @@ const byte heaterPin = 0;
 // PWM period [ms].
 const int heatingPeriod = 2000;
 
-
-// Global variables. //////////////////////////////////////////////////
-// Heat level.
+// Global variables. ///////////////////////////////////////////////////////////
+// Current heat level.
 byte heat = 0;
 
-// Button "object".
+// Button struct.
 Button button = Button(buttonPin, false, false, debounceTime);
 
-
-// Functions. /////////////////////////////////////////////////////////
+// Functions. //////////////////////////////////////////////////////////////////
 // Set given number of LEDs to given brightness.
 void shine(byte brightness, byte n = leds)
 {
@@ -66,13 +66,15 @@ void setup()
         pinMode(ledPin[i], OUTPUT);
     pinMode(buttonPin, INPUT);
     pinMode(heaterPin, OUTPUT);
+    pinMode(LED_BUILTIN, OUTPUT);
     
-    // Light all LEDs for a short time to show device is ready.
+    // Flash all LEDs to show device is ready.
     shine(brightness);
+    analogWrite(LED_BUILTIN, brightness);
     delay(flashDuration);
     shine(0);
+    analogWrite(LED_BUILTIN, 0);
 }
-
 
 // Infinite worker loop.
 void loop()
@@ -81,18 +83,18 @@ void loop()
     button.read();
     if (button.wasPressed())
     {
-        if (heat == 0)
+        if (heat <= 0)
             heat = heatLevels - 1;
-        else if (button.pressedFor(longPress))
-            heat = 0;
         else
-            --heat;
+            heat = (heat - 1) * !button.pressedFor(longPress);
     }
 
     // Visualize the heat level using the LEDs.
     shine(brightness, heat);
     
-    // If the heating duration is not yet over, heat the grips.
-    digitalWrite(heaterPin, (millis()%heatingPeriod) < heatDutyCycle[heat]*heatingPeriod);
+    // If the heating duration is not yet over, heat the grips 
+    // and light the built-in LED.
+    boolean heatOn = (millis()%heatingPeriod) < heatDutyCycle[heat]*heatingPeriod;
+    digitalWrite(heaterPin, heatOn);
+    analogWrite(LED_BUILTIN, brightness * heatOn);
 }
-
