@@ -22,13 +22,13 @@
 const int debounceTime = 50;
 
 // Duration of long button activation [ms].
-const int longPress = 1000;
+const int longPress = 500;
 
 // LED brightness. Interval: [0; 255].
 const byte brightness = 0.6 * 255;
 
 // Duration of LED flash during startup.
-const int flashDuration = 200;
+const int flashDuration = 1000;
 
 // Number of heat levels and corresponding PWM duty cycles.
 const byte heatLevels = 6;
