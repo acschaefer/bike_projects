@@ -25,23 +25,23 @@ const int debounceTime = 50;
 const int longPress = 500;
 
 // LED brightness. Interval: [0; 255].
-const byte brightness = 0.6 * 255;
+const byte brightness = 0.2 * 255;
 
 // Duration of LED flash during startup.
 const int flashDuration = 1000;
 
 // Number of heat levels and corresponding PWM duty cycles.
 const byte heatLevels = 6;
-const float heatDutyCycle[heatLevels] = {0f, 0.10f, 0.20f, 0.28f, 0.35f, 0.50f};
+const float heatDutyCycle[heatLevels] = {0.0f, 0.10f, 0.20f, 0.28f, 0.35f, 0.50f};
 
 // Pin numbers.
 const byte leds = heatLevels - 1;
-const byte ledPin[leds] = {5, 6, 9, 10, 11};
-const byte buttonPin = 1;
+const byte ledPin[leds] = {5, 3, 9, 10, 11};
+const byte buttonPin = 6;
 const byte heaterPin = 0;
 
 // PWM period [ms].
-const int heatingPeriod = 2000;
+const int heatingPeriod = 5000;
 
 // Global variables. ///////////////////////////////////////////////////////////
 // Current heat level.
@@ -59,7 +59,7 @@ void shine(byte brightness, byte n = leds)
 }
 
 // Set up the controller after boot.
-void setup() 
+void setup()
 {
     // Initialize pins.
     for (byte i = 0; i < leds; ++i)
@@ -70,10 +70,10 @@ void setup()
     
     // Flash all LEDs to show device is ready.
     shine(brightness);
-    analogWrite(LED_BUILTIN, brightness);
+    digitalWrite(LED_BUILTIN, HIGH);
     delay(flashDuration);
     shine(0);
-    analogWrite(LED_BUILTIN, 0);
+    digitalWrite(LED_BUILTIN, LOW);
 }
 
 // Infinite worker loop.
@@ -85,8 +85,10 @@ void loop()
     {
         if (heat <= 0)
             heat = heatLevels - 1;
+        else if (button.pressedFor(longPress))
+            heat = 0;
         else
-            heat = (heat - 1) * !button.pressedFor(longPress);
+            heat--;
     }
 
     // Visualize the heat level using the LEDs.
@@ -96,5 +98,5 @@ void loop()
     // and light the built-in LED.
     boolean heatOn = (millis()%heatingPeriod) < heatDutyCycle[heat]*heatingPeriod;
     digitalWrite(heaterPin, heatOn);
-    analogWrite(LED_BUILTIN, brightness * heatOn);
+    digitalWrite(LED_BUILTIN, heatOn);
 }
