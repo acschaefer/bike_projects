@@ -25,7 +25,7 @@ const int debounceTime = 50;
 const int longPress = 1000;
 
 // LED brightness. Interval: [0; 255].
-const byte brightness = 0.1 * 255;//////
+const byte brightness = 0.3 * 255;
 
 // Duration of LED flash during startup.
 const unsigned long flashDuration = 1000;
@@ -41,7 +41,7 @@ const int buttonPin = 8;
 const int heaterPin = 0;
 
 // PWM period [ms].
-const unsigned long heatingPeriod = 2000;//////
+const unsigned long heatingPeriod = 5000;
 
 // Global variables. ///////////////////////////////////////////////////////////
 // Current heat level.
@@ -94,8 +94,8 @@ void loop()
             heat = heatLevels - 1;
     }
 
-    //if (button.pressedFor(longPress) && heat < heatLevels-1)
-    //    heat = 0;
+    if (button.pressedFor(longPress) && heat < heatLevels-1)
+        heat = 0;
     
     // Visualize the heat level using the LEDs.
     shine(brightness, heat);
