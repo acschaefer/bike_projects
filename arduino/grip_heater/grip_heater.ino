@@ -36,8 +36,8 @@ const float heatDutyCycle[heatLevels] = {0.0f, 0.10f, 0.20f, 0.28f, 0.35f, 0.50f
 
 // Pin numbers.
 const byte leds = heatLevels - 1;
-const byte ledPin[leds] = {5, 3, 9, 10, 11};
-const byte buttonPin = 6;
+const byte ledPin[leds] = {6, 3, 9, 10, 11};
+const byte buttonPin = 4;
 const byte heaterPin = 0;
 
 // PWM period [ms].
@@ -48,7 +48,7 @@ const int heatingPeriod = 5000;
 byte heat = 0;
 
 // Button struct.
-Button button = Button(buttonPin, false, false, debounceTime);
+Button button = Button(buttonPin, true, true, debounceTime);
 
 // Functions. //////////////////////////////////////////////////////////////////
 // Set given number of LEDs to given brightness.
