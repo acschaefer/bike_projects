@@ -22,7 +22,7 @@
 const int debounceTime = 50;
 
 // Duration of long button activation [ms].
-const int longPress = 500;
+const int longPress = 1000;
 
 // LED brightness. Interval: [0; 255].
 const byte brightness = 0.2 * 255;
