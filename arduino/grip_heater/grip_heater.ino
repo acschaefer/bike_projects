@@ -25,55 +25,60 @@ const int debounceTime = 50;
 const int longPress = 1000;
 
 // LED brightness. Interval: [0; 255].
-const byte brightness = 0.2 * 255;
+const byte brightness = 0.1 * 255;//////
 
 // Duration of LED flash during startup.
-const int flashDuration = 1000;
+const unsigned long flashDuration = 1000;
 
 // Number of heat levels and corresponding PWM duty cycles.
-const byte heatLevels = 6;
-const float heatDutyCycle[heatLevels] = {0.0f, 0.10f, 0.20f, 0.28f, 0.35f, 0.50f};
+const int heatLevels = 6;
+const double heatDutyCycle[heatLevels] = {0.0, 0.10, 0.20, 0.28, 0.35, 0.50};
 
 // Pin numbers.
-const byte leds = heatLevels - 1;
-const byte ledPin[leds] = {6, 3, 9, 10, 11};
-const byte buttonPin = 4;
-const byte heaterPin = 0;
+const int leds = heatLevels - 1;
+const int ledPin[leds] = {11, 3, 9, 10, 6};
+const int buttonPin = 8;
+const int heaterPin = 0;
 
 // PWM period [ms].
-const int heatingPeriod = 5000;
+const unsigned long heatingPeriod = 2000;//////
 
 // Global variables. ///////////////////////////////////////////////////////////
 // Current heat level.
-byte heat = 0;
+int heat = 0;
 
-// Button struct.
-Button button = Button(buttonPin, true, true, debounceTime);
+// Button object.
+Button button(buttonPin, true, true, debounceTime);
 
 // Functions. //////////////////////////////////////////////////////////////////
 // Set given number of LEDs to given brightness.
-void shine(byte brightness, byte n = leds)
+void shine(byte brightness, int n = leds)
 {
-    for (byte i = 0; i < leds; ++i)
+    for (int i = 0; i < leds; ++i)
         analogWrite(ledPin[i], brightness * (i<n));
+}
+
+// Flash all LEDs.
+void flash(unsigned long duration)
+{    
+    shine(brightness);
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(duration);
+    shine(0);
+    digitalWrite(LED_BUILTIN, LOW);
 }
 
 // Set up the controller after boot.
 void setup()
 {
     // Initialize pins.
-    for (byte i = 0; i < leds; ++i)
+    for (int i = 0; i < leds; ++i)
         pinMode(ledPin[i], OUTPUT);
-    pinMode(buttonPin, INPUT);
     pinMode(heaterPin, OUTPUT);
     pinMode(LED_BUILTIN, OUTPUT);
     
     // Flash all LEDs to show device is ready.
-    shine(brightness);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(flashDuration);
-    shine(0);
-    digitalWrite(LED_BUILTIN, LOW);
+    flash(flashDuration);
 }
 
 // Infinite worker loop.
@@ -82,16 +87,25 @@ void loop()
     // Adjust the heat level according to how long the button was pressed.
     button.read();
     if (button.wasPressed())
-        heat %= heat - 1;
-    if (button.pressedFor(longPress) && heat < heatLevels-1)
-        heat = 0;
+    {
+        if (heat > 0)
+            heat--;
+        else
+            heat = heatLevels - 1;
+    }
+
+    //if (button.pressedFor(longPress) && heat < heatLevels-1)
+    //    heat = 0;
     
     // Visualize the heat level using the LEDs.
     shine(brightness, heat);
     
     // If the heating duration is not yet over, heat the grips 
     // and light the built-in LED.
-    boolean heatOn = (millis()%heatingPeriod) < heatDutyCycle[heat]*heatingPeriod;
+    unsigned long millisSincePeriod = millis() % heatingPeriod;
+    unsigned long millisToHeat = heatDutyCycle[heat] * heatingPeriod;
+    boolean heatOn =  millisToHeat > millisSincePeriod;
     digitalWrite(heaterPin, heatOn);
     digitalWrite(LED_BUILTIN, heatOn);
 }
+
