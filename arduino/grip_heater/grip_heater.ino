@@ -82,15 +82,10 @@ void loop()
     // Adjust the heat level according to how long the button was pressed.
     button.read();
     if (button.wasPressed())
-    {
-        if (heat <= 0)
-            heat = heatLevels - 1;
-        else if (button.pressedFor(longPress))
-            heat = 0;
-        else
-            heat--;
-    }
-
+        heat %= heat - 1;
+    if (button.pressedFor(longPress) && heat < heatLevels-1)
+        heat = 0;
+    
     // Visualize the heat level using the LEDs.
     shine(brightness, heat);
     
