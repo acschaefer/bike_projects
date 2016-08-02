@@ -52,18 +52,27 @@ Button button(buttonPin, true, true, debounceTime);
 
 // Functions. //////////////////////////////////////////////////////////////////
 // Switch on given number of LEDs.
-void glow(int n = leds)
+void glow(int n)
 {
     for (int i = 0; i < leds; ++i)
         analogWrite(ledPin[i], brightness * (i<n));
 }
 
 // Flash all LEDs.
-void flash(unsigned long duration)
-{    
-    glow();
+void flash()
+{
+    // Switch on all LEDs, one after the other.
+    const unsigned long stepDuration = 0.33 * flashDuration;
+    for (int i = 1; i < leds-1; ++i)
+    {
+        glow(i);
+        delay(stepDuration / (leds-1));
+    }
+    glow(leds);
     digitalWrite(LED_BUILTIN, HIGH);
-    delay(duration);
+    delay(flashDuration - stepDuration);
+    
+    // Switch off LEDs.
     glow(0);
     digitalWrite(LED_BUILTIN, LOW);
 }
@@ -78,7 +87,7 @@ void setup()
     pinMode(LED_BUILTIN, OUTPUT);
     
     // Flash all LEDs to show device is ready.
-    flash(flashDuration);
+    flash();
 }
 
 // Infinite worker loop.
