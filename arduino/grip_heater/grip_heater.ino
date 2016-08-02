@@ -17,7 +17,7 @@
 // Button handling and debouncing.
 #include "Button.h"
 
-// Constants. //////////////////////////////////////////////////////////////////
+// Global constants. ///////////////////////////////////////////////////////////
 // Button debouncing time [ms].
 const int debounceTime = 50;
 
@@ -51,8 +51,8 @@ int heat = 0;
 Button button(buttonPin, true, true, debounceTime);
 
 // Functions. //////////////////////////////////////////////////////////////////
-// Set given number of LEDs to given brightness.
-void shine(byte brightness, int n = leds)
+// Switch on given number of LEDs.
+void glow(int n = leds)
 {
     for (int i = 0; i < leds; ++i)
         analogWrite(ledPin[i], brightness * (i<n));
@@ -61,10 +61,10 @@ void shine(byte brightness, int n = leds)
 // Flash all LEDs.
 void flash(unsigned long duration)
 {    
-    shine(brightness);
+    glow();
     digitalWrite(LED_BUILTIN, HIGH);
     delay(duration);
-    shine(0);
+    glow(0);
     digitalWrite(LED_BUILTIN, LOW);
 }
 
@@ -98,7 +98,7 @@ void loop()
         heat = 0;
     
     // Visualize the heat level using the LEDs.
-    shine(brightness, heat);
+    glow(heat);
     
     // If the heating duration is not yet over, heat the grips 
     // and light the built-in LED.
