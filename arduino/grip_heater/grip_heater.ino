@@ -32,7 +32,7 @@ const unsigned long flashDuration = 1000;
 
 // Number of heat levels and corresponding PWM duty cycles.
 const int heatLevels = 6;
-const double heatDutyCycle[heatLevels] = {0.0, 0.10, 0.20, 0.28, 0.35, 0.50};
+const double heatDutyCycle[heatLevels] = {0.0, 0.10, 0.18, 0.25, 0.30, 0.40};
 
 // Pin numbers.
 const int leds = heatLevels - 1;
