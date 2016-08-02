@@ -28,7 +28,7 @@ const int longPress = 1000;
 const byte brightness = 0.3 * 255;
 
 // Duration of LED flash during startup.
-const unsigned long flashDuration = 1000;
+const unsigned long flashDuration = 1500ul;
 
 // Number of heat levels and corresponding PWM duty cycles.
 const int heatLevels = 6;
@@ -41,7 +41,7 @@ const int buttonPin = 8;
 const int heaterPin = 0;
 
 // PWM period [ms].
-const unsigned long heatingPeriod = 5000;
+const unsigned long heatingPeriod = 15000ul;
 
 // Global variables. ///////////////////////////////////////////////////////////
 // Current heat level.
