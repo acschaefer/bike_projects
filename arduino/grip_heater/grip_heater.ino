@@ -41,7 +41,7 @@ const int buttonPin = 8;
 const int heaterPin = 0;
 
 // PWM period [ms].
-const unsigned long heatingPeriod = 15000ul;
+const unsigned long heatingPeriod = 5000ul;
 
 // Global variables. ///////////////////////////////////////////////////////////
 // Current heat level.
@@ -62,8 +62,8 @@ void glow(int n)
 void flash()
 {
     // Switch on all LEDs, one after the other.
-    const unsigned long stepDuration = 0.33 * flashDuration;
-    for (int i = 1; i < leds-1; ++i)
+    const unsigned long stepDuration = flashDuration / 3;
+    for (int i = 1; i < leds; ++i)
     {
         glow(i);
         delay(stepDuration / (leds-1));
