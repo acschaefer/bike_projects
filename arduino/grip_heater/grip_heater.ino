@@ -36,7 +36,7 @@ const double heatDutyCycle[heatLevels] = {0.0, 0.10, 0.18, 0.25, 0.30, 0.40};
 
 // Pin numbers.
 const int leds = heatLevels - 1;
-const int ledPin[leds] = {11, 3, 9, 10, 6};
+const int ledPin[leds] = {3, 10, 11, 9, 6};
 const int buttonPin = 8;
 const int heaterPin = 0;
 
