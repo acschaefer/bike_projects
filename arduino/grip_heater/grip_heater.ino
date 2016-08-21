@@ -2,7 +2,7 @@
 //
 // Hardware:
 // The grip heater consists of an Arduino Trinket Pro, a button, five LEDs, 
-// and heated grips.
+// a MOSFET, and heated grips.
 // 
 // Behavior:
 // When the button is first pressed, all LEDs are lit and the grips are heated
