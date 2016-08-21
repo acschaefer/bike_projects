@@ -18,7 +18,17 @@
 // See https://github.com/JChristensen/Button.
 #include "Button.h"
 
+// Input voltage measuring.
+// See https://github.com/Yveaux/arduino_vcc.
+#include "Vcc.h"
+
 // Global constants. ///////////////////////////////////////////////////////////
+// Input voltage sensor.
+Vcc vcc();
+
+// Reference input voltage.
+const float vccRef = 14.0f;
+
 // Button debouncing time [ms].
 const int debounceTime = 50;
 
@@ -48,7 +58,7 @@ const unsigned long heatingPeriod = 5000ul;
 // Current heat level.
 int heat = 0;
 
-// Button object.
+// Button sensor.
 Button button(buttonPin, true, true, debounceTime);
 
 // Functions. //////////////////////////////////////////////////////////////////
@@ -113,9 +123,10 @@ void loop()
     // If the heating duration is not yet over, heat the grips 
     // and light the built-in LED.
     unsigned long millisSincePeriod = millis() % heatingPeriod;
-    unsigned long millisToHeat = heatDutyCycle[heat] * heatingPeriod;
+    vccCorrection = sq(vccRef / vcc.Read_Volts());
+    unsigned long millisToHeat 
+        = heatDutyCycle[heat] * heatingPeriod * vccCorrection;
     boolean heatOn =  millisToHeat > millisSincePeriod;
     digitalWrite(heaterPin, heatOn);
     digitalWrite(LED_BUILTIN, heatOn);
 }
-
