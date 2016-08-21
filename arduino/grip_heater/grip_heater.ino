@@ -15,6 +15,7 @@
 
 // Included libraries. /////////////////////////////////////////////////////////
 // Button handling and debouncing.
+// See https://github.com/JChristensen/Button.
 #include "Button.h"
 
 // Global constants. ///////////////////////////////////////////////////////////
@@ -32,7 +33,7 @@ const unsigned long flashDuration = 1500ul;
 
 // Number of heat levels and corresponding PWM duty cycles.
 const int heatLevels = 6;
-const double heatDutyCycle[heatLevels] = {0.0, 0.25, 0.38, 0.5, 0.7, 1.00};
+const double heatDutyCycle[heatLevels] = {0.00, 0.30, 0.45, 0.60, 0.80, 1.00};
 
 // Pin numbers.
 const int leds = heatLevels - 1;
