@@ -27,7 +27,7 @@
 Vcc vcc();
 
 // Reference input voltage.
-const float vccRef = 14.0f;
+const float vccRef = 14.75f;
 
 // Button debouncing time [ms].
 const int debounceTime = 50;
