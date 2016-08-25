@@ -24,7 +24,7 @@
 
 // Global constants. ///////////////////////////////////////////////////////////
 // Input voltage sensor.
-Vcc vcc();
+Vcc vcc;
 
 // Reference input voltage.
 const float vccRef = 14.75f;
@@ -123,7 +123,7 @@ void loop()
     // If the heating duration is not yet over, heat the grips 
     // and light the built-in LED.
     unsigned long millisSincePeriod = millis() % heatingPeriod;
-    vccCorrection = sq(vccRef / vcc.Read_Volts());
+    double vccCorrection = sq(vccRef / vcc.Read_Volts());
     unsigned long millisToHeat 
         = heatDutyCycle[heat] * heatingPeriod * vccCorrection;
     boolean heatOn =  millisToHeat > millisSincePeriod;
