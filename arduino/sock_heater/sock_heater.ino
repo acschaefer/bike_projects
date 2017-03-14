@@ -20,10 +20,7 @@
 
 // Global constants. ///////////////////////////////////////////////////////////
 // Button debouncing time [ms].
-const int debounceTime = 200;
-
-// Duration of long button activation [ms].
-const int longPress = 1000;
+const int debounceTime = 50;
 
 // Duration of LED flash during startup.
 const unsigned long flashDuration = 1000ul;
@@ -88,9 +85,6 @@ void loop()
         else
             heat = heatLevels - 1;
     }
-
-    if (button.pressedFor(longPress) && heat < heatLevels-1)
-        heat = 0;
     
     // Visualize the heat level using the LEDs.
     glow(heat);
