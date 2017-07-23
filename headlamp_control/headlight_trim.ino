@@ -6,82 +6,93 @@
 // stepper motor driver, and a button.
 // 
 // Behavior:
-// When the button is pressed, the motor turns the headlight trim adjustment 
-// skrew.
+// When the up button is pressed, the motor turns the headlight trim adjustment 
+// skrew in one direction. When the down button is pressed, it turns it in the 
+// other direction.
 //
 // Copyright 2017 Alexander Schaefer
 
 // Included libraries. /////////////////////////////////////////////////////////
+// Library necessary to enable 16 MHz clock frequency.
+#include <avr/power.h>
+
 // Button handling and debouncing.
 // See https://github.com/JChristensen/Button.
 #include "Button.h"
 
-// Global constants. ///////////////////////////////////////////////////////////
-// Button debouncing time [ms].
-const int debounceTime = 50;
+// Stepper motor library.
+#include <AccelStepper.h>
 
+// Global constants and variables. /////////////////////////////////////////////
 // Pin numbers.
-const int buttonUpPin = 3;
-const int buttonDownPin = 4;
-const int dirPin = 2;
-const int stepPin = 1;
-const int wakePin = 0;
+const byte buttonUpPin = 3;
+const byte buttonDownPin = 2;
+const byte motorWakePin = 0;
+const byte dirPin = 4;
+const byte stepPin = 1;
 
-// Skrew angular velocity [rpm].
-const double skrewRpm = 15.0;
+// Skrew speed [rps].
+const float skrewSpeed = 0.25f;
 
 // Ratio of the worm drive.
-const double gearRatio = 23.0;
+const float gearRatio = 23.0f;
 
 // Resolution of the stepper motor.
-const double motorRes = 200.0;
+const byte motorResolution = 200;
 
-// Counter frequency.
-const double clockFrequency = 8.0e6;
+// Maximum admissible motor position.
+const long maxPosition = (long)(1.5 * motorResolution * gearRatio);
 
-// Global variables. ///////////////////////////////////////////////////////////
-// Button.
+// Button debouncing time [ms].
+const byte debounceTime = 50;
+
+// Button configuration.
 const boolean pullup = true;
 const boolean invert = true;
+
+// Actual buttons.
 Button buttonUp(buttonUpPin, pullup, invert, debounceTime);
 Button buttonDown(buttonDownPin, pullup, invert, debounceTime);
+
+// Stepper motor.
+AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin);
+
+// Time to full speed [s].
+float accelerationTime = 1.0;
 
 // Functions. //////////////////////////////////////////////////////////////////
 // Set up the controller after boot.
 void setup()
 {
-    // Initialize pins.
-    pinMode(wakePin, OUTPUT);
-    pinMode(dirPin, OUTPUT);
-    //pinMode(stepPin, OUTPUT);
+    // Set processor clock to 16 MHz.
+    if (F_CPU == 16000000)
+        clock_prescale_set(clock_div_1);
 
-  DDRB  = 0x02;
-  TCCR1 = 0x9F;
-  OCR1C = 1;
+    // Initialize motor wake pin.
+    pinMode(motorWakePin, OUTPUT);
 
-    // Configure the counter prescaler.
-    //TCCR1 = B10010001;
+    // Set maximum speed of stepper motor.
+    stepper.setMaxSpeed(motorResolution * gearRatio * skrewSpeed);
 
-    // Set the value of the counter compare register.
-    //OCR1C = constrain(skrewRpm*gearRatio*motorRes/clockFrequency*2.0 - 1,
-    //                  1, 255);
+    // Set acceleration of stepper motor.
+    stepper.setAcceleration(stepper.maxSpeed() / accelerationTime);
 }
 
 // Infinite worker loop.
 void loop()
 {
-    // Set the direction.
-    //digitalWrite(dirPin, buttonUp.isPressed());
-    
-    // Wake the motor driver up if a button is pressed.
-    //digitalWrite(wakePin, buttonUp.read() || buttonDown.read());
-digitalWrite(dirPin, HIGH);
-digitalWrite(wakePin, HIGH);
-while (true)
-{
-  //digitalWrite(stepPin,HIGH);
-    delay(10);
-    //digitalWrite(stepPin, LOW);
-}
-}
+    // Read the states of the buttons.
+    buttonUp.read();
+    buttonDown.read();
 
+    // If a button was pressed, move the skrew in the respective direction.
+    if (buttonUp.wasPressed())
+        stepper.moveTo(maxPosition);
+    else if (buttonDown.wasPressed())
+        stepper.moveTo(-maxPosition);
+    else if (buttonUp.wasReleased() || buttonDown.wasReleased())
+        stepper.stop();
+
+    // Step the motor, if required. If the motor does not run, let it sleep.
+    digitalWrite(motorWakePin, stepper.run());
+}
