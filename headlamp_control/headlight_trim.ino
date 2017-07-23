@@ -21,6 +21,7 @@
 #include "Button.h"
 
 // Stepper motor library.
+// See http://www.airspayce.com/mikem/arduino/AccelStepper/index.html.
 #include <AccelStepper.h>
 
 // Global constants and variables. /////////////////////////////////////////////
@@ -46,11 +47,9 @@ const long maxPosition = (long)(1.5 * motorResolution * gearRatio);
 // Button debouncing time [ms].
 const byte debounceTime = 50;
 
-// Button configuration.
+// Buttons.
 const boolean pullup = true;
 const boolean invert = true;
-
-// Actual buttons.
 Button buttonUp(buttonUpPin, pullup, invert, debounceTime);
 Button buttonDown(buttonDownPin, pullup, invert, debounceTime);
 
@@ -58,7 +57,7 @@ Button buttonDown(buttonDownPin, pullup, invert, debounceTime);
 AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin);
 
 // Time to full speed [s].
-float accelerationTime = 1.0;
+float accelerationTime = 1.0f;
 
 // Functions. //////////////////////////////////////////////////////////////////
 // Set up the controller after boot.
@@ -84,15 +83,20 @@ void loop()
     // Read the states of the buttons.
     buttonUp.read();
     buttonDown.read();
-
+    
     // If a button was pressed, move the skrew in the respective direction.
-    if (buttonUp.wasPressed())
-        stepper.moveTo(maxPosition);
-    else if (buttonDown.wasPressed())
-        stepper.moveTo(-maxPosition);
+    // If the button was released, stop the motor.
+    if (buttonUp.wasPressed() || buttonUp.wasPressed())
+    {
+        digitalWrite(motorWakePin, HIGH);
+        delay(2ul);
+        stepper.moveTo((buttonUp.wasPressed() - buttonDown.wasPressed()) 
+                       * maxPosition);
+    }
     else if (buttonUp.wasReleased() || buttonDown.wasReleased())
         stepper.stop();
 
-    // Step the motor, if required. If the motor does not run, let it sleep.
+    // Turn the motor, if required. If the motor does not run, let the 
+    // motor driver sleep.
     digitalWrite(motorWakePin, stepper.run());
 }
