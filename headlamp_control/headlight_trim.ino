@@ -12,52 +12,51 @@
 //
 // Copyright 2017 Alexander Schaefer
 
-// Included libraries. /////////////////////////////////////////////////////////
-// Library necessary to enable 16 MHz clock frequency.
-#include <avr/power.h>
-
+// Include libraries. //////////////////////////////////////////////////////////
 // Button handling and debouncing.
 // See https://github.com/JChristensen/Button.
 #include "Button.h"
-
-// Stepper motor library.
-// See http://www.airspayce.com/mikem/arduino/AccelStepper/index.html.
-#include <AccelStepper.h>
 
 // Global constants and variables. /////////////////////////////////////////////
 // Pin numbers.
 const byte buttonUpPin = 3;
 const byte buttonDownPin = 2;
-const byte motorWakePin = 0;
+const byte wakePin = 0;
 const byte dirPin = 4;
 const byte stepPin = 1;
 
-// Skrew speed [rps].
-const float skrewSpeed = 0.25f;
+// Step frequency at maximum speed.
+const float stepFrequency = 1.0f / (0.25f * 23f * 200f);
 
-// Ratio of the worm drive.
-const float gearRatio = 23.0f;
+// Duration needed to wake the motor driver and set it asleep [us].
+unsigned int wakeDuration = 1500u;
+unsigned int sleepDuration = 100u;
 
-// Resolution of the stepper motor.
-const byte motorResolution = 200;
+// Time the motor driver needs to recognize a step signal [us].
+unsigned int stepSignalDuration = 2u;
 
-// Maximum admissible motor position.
-const long maxPosition = (long)(1.5 * motorResolution * gearRatio);
+// Point in time when the next step is triggered relative to the time then the 
+// program was started [us].
+unsigned long nextStep = 0ul;
 
-// Button debouncing time [ms].
-const byte debounceTime = 50;
+// Position of the motor in steps.
+int position = 0;
+
+// Duration to full speed [us].
+unsigned long accelerationDuration = 1000000ul;
+
+// Point in time when the motor started accelerating [us].
+unsigned long accelerationStartTime = 0ul;
+
+// Tells if the motor turns.
+boolean turn = false;
 
 // Buttons.
 const boolean pullup = true;
 const boolean invert = true;
+const int debounceTime = 50; // [ms]
 Button buttonUp(buttonUpPin, pullup, invert, debounceTime);
 Button buttonDown(buttonDownPin, pullup, invert, debounceTime);
-
-// Stepper motor.
-AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin);
-
-// Time to full speed [s].
-float accelerationTime = 1.0f;
 
 // Functions. //////////////////////////////////////////////////////////////////
 // Set up the controller after boot.
@@ -67,14 +66,9 @@ void setup()
     if (F_CPU == 16000000)
         clock_prescale_set(clock_div_1);
 
-    // Initialize motor wake pin.
+    // Initialize the output pins.
     pinMode(motorWakePin, OUTPUT);
-
-    // Set maximum speed of stepper motor.
-    stepper.setMaxSpeed(motorResolution * gearRatio * skrewSpeed);
-
-    // Set acceleration of stepper motor.
-    stepper.setAcceleration(stepper.maxSpeed() / accelerationTime);
+    pinMode(stepPin, OUTPUT);
 }
 
 // Infinite worker loop.
@@ -83,20 +77,42 @@ void loop()
     // Read the states of the buttons.
     buttonUp.read();
     buttonDown.read();
-    
-    // If a button was pressed, move the skrew in the respective direction.
-    // If the button was released, stop the motor.
+        
+    // Start or stop the motor.
     if (buttonUp.wasPressed() || buttonUp.wasPressed())
     {
-        digitalWrite(motorWakePin, HIGH);
-        delay(2ul);
-        stepper.moveTo((buttonUp.wasPressed() - buttonDown.wasPressed()) 
-                       * maxPosition);
+        digitalWrite(wakePin, HIGH);
+        delayMicroseconds(wakeTime);
+        turn = true;
+        nextStep = micros();
+        accelerationStartTime = nextStep;
     }
     else if (buttonUp.wasReleased() || buttonDown.wasReleased())
-        stepper.stop();
-
-    // Turn the motor, if required. If the motor does not run, let the 
-    // motor driver sleep.
-    digitalWrite(motorWakePin, stepper.run());
+    {
+        digitalWrite(wakePin, LOW);
+        delayMicroseconds(sleepTime);
+        turn = false;
+    }
+    
+    // Step the motor.
+    if (turn)
+    {
+        // Measure the time to the next step.
+        int dt = nextStep - micros();
+        
+        // Step the motor.
+        if (dt <= 0)
+        {
+            // Step the motor.
+            digitalWrite(stepPin, HIGH);
+            delayMicroseconds(stepTime);
+            digitalWrite(stepPin, LOW);
+        
+            // Compute when the next step is due.
+            int elapsedAccelerationTime = constrain(micros() - accelerationStartTime, 
+                                                    1, accelerationTime);
+            nextStep += accelerationTime 
+                        / (float)(elapsedAccelerationTime * stepFrequency);
+        }
+    }    
 }
