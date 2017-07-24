@@ -13,6 +13,9 @@
 // Copyright 2017 Alexander Schaefer
 
 // Include libraries. //////////////////////////////////////////////////////////
+// Library necessary to enable 16 MHz clock frequency.
+#include <avr/power.h>
+
 // Button handling and debouncing.
 // See https://github.com/JChristensen/Button.
 #include "Button.h"
@@ -26,14 +29,14 @@ const byte dirPin = 4;
 const byte stepPin = 1;
 
 // Step frequency at maximum speed.
-const float stepFrequency = 1.0f / (0.25f * 23f * 200f);
+const float stepFrequency = 1.0 / (0.25 * 23.0 * 200.0);
 
 // Duration needed to wake the motor driver and set it asleep [us].
 unsigned int wakeDuration = 1500u;
 unsigned int sleepDuration = 100u;
 
 // Time the motor driver needs to recognize a step signal [us].
-unsigned int stepSignalDuration = 2u;
+unsigned int stepDuration = 2u;
 
 // Point in time when the next step is triggered relative to the time then the 
 // program was started [us].
@@ -46,7 +49,7 @@ int position = 0;
 unsigned long accelerationDuration = 1000000ul;
 
 // Point in time when the motor started accelerating [us].
-unsigned long accelerationStartTime = 0ul;
+unsigned long accelerationStart = 0ul;
 
 // Tells if the motor turns.
 boolean turn = false;
@@ -67,7 +70,7 @@ void setup()
         clock_prescale_set(clock_div_1);
 
     // Initialize the output pins.
-    pinMode(motorWakePin, OUTPUT);
+    pinMode(wakePin, OUTPUT);
     pinMode(stepPin, OUTPUT);
 }
 
@@ -82,15 +85,15 @@ void loop()
     if (buttonUp.wasPressed() || buttonUp.wasPressed())
     {
         digitalWrite(wakePin, HIGH);
-        delayMicroseconds(wakeTime);
+        delayMicroseconds(wakeDuration);
         turn = true;
         nextStep = micros();
-        accelerationStartTime = nextStep;
+        accelerationStart = nextStep;
     }
     else if (buttonUp.wasReleased() || buttonDown.wasReleased())
     {
         digitalWrite(wakePin, LOW);
-        delayMicroseconds(sleepTime);
+        delayMicroseconds(sleepDuration);
         turn = false;
     }
     
@@ -100,19 +103,19 @@ void loop()
         // Measure the time to the next step.
         int dt = nextStep - micros();
         
-        // Step the motor.
+        // Step the motor if a step is due.
         if (dt <= 0)
         {
             // Step the motor.
             digitalWrite(stepPin, HIGH);
-            delayMicroseconds(stepTime);
+            delayMicroseconds(stepDuration);
             digitalWrite(stepPin, LOW);
         
-            // Compute when the next step is due.
-            int elapsedAccelerationTime = constrain(micros() - accelerationStartTime, 
-                                                    1, accelerationTime);
-            nextStep += accelerationTime 
-                        / (float)(elapsedAccelerationTime * stepFrequency);
+            // Compute the time when the next step is due.
+            int elapsedAcceleration = constrain(micros() - accelerationStart, 
+                                                1, accelerationDuration);
+            nextStep += accelerationDuration 
+                        / (float)(elapsedAcceleration * stepFrequency);
         }
     }    
 }
