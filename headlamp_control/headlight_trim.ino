@@ -22,31 +22,31 @@
 
 // Global constants and variables. /////////////////////////////////////////////
 // Pin numbers.
-const byte buttonUpPin = 3;
+const byte buttonUpPin = 2;//3;
 const byte buttonDownPin = 2;
 const byte wakePin = 0;
 const byte dirPin = 4;
 const byte stepPin = 1;
 
-// Step frequency at maximum speed.
-const float stepFrequency = 1.0 / (0.25 * 23.0 * 200.0);
+// Step rate at maximum speed [Hz].
+const unsigned long stepRate = 23 * 200 / 4;
 
-// Duration needed to wake the motor driver and set it asleep [us].
-unsigned int wakeDuration = 1500u;
-unsigned int sleepDuration = 100u;
+// Duration needed to wake the motor driver and to set it asleep [us].
+const unsigned int wakeDuration = 1500u;
+const unsigned int sleepDuration = 100u;
 
 // Time the motor driver needs to recognize a step signal [us].
-unsigned int stepDuration = 2u;
+const unsigned int stepDuration = 2u;
 
-// Point in time when the next step is triggered relative to the time then the 
-// program was started [us].
-unsigned long nextStep = 0ul;
+// Point in time when the last step was triggered. The time is specified
+// relative to the time when the program was started [us].
+unsigned long lastStep = 0ul;
 
 // Position of the motor in steps.
 int position = 0;
 
 // Duration to full speed [us].
-unsigned long accelerationDuration = 1000000ul;
+unsigned long accelerationDuration = 500000ul;
 
 // Point in time when the motor started accelerating [us].
 unsigned long accelerationStart = 0ul;
@@ -87,8 +87,8 @@ void loop()
         digitalWrite(wakePin, HIGH);
         delayMicroseconds(wakeDuration);
         turn = true;
-        nextStep = micros();
-        accelerationStart = nextStep;
+        lastStep = micros();
+        accelerationStart = lastStep;
     }
     else if (buttonUp.wasReleased() || buttonDown.wasReleased())
     {
@@ -99,23 +99,25 @@ void loop()
     
     // Step the motor.
     if (turn)
-    {
-        // Measure the time to the next step.
-        int dt = nextStep - micros();
-        
-        // Step the motor if a step is due.
-        if (dt <= 0)
+    {   
+        // Compute the current step rate [us].
+        unsigned long elapsedAcceleration = micros() - accelerationStart;
+        unsigned long dt = (max(accelerationDuration / elapsedAcceleration, 1) 
+                            * 1000000) / stepRate;
+
+        // Step the motor, if a step is due.
+        if (micros() >= lastStep + dt)
         {
             // Step the motor.
             digitalWrite(stepPin, HIGH);
             delayMicroseconds(stepDuration);
             digitalWrite(stepPin, LOW);
-        
-            // Compute the time when the next step is due.
-            int elapsedAcceleration = constrain(micros() - accelerationStart, 
-                                                1, accelerationDuration);
-            nextStep += accelerationDuration 
-                        / (float)(elapsedAcceleration * stepFrequency);
+
+            // Increment the position counter.
+            //position += buttonUp.isPressed() - buttonDown.isPressed();
+
+            // Update the time of the last step command.
+            lastStep += dt;
         }
     }    
 }
