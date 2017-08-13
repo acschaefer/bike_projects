@@ -29,7 +29,7 @@ const byte dirPin = 4;
 const byte stepPin = 1;
 
 // Step rate at maximum speed [Hz].
-const unsigned long stepRate = 23 * 200 / 3;
+const unsigned long maxStepRate = 23 * 200 / 3;
 
 // Duration needed to wake the motor driver and to set it asleep [us].
 const unsigned int wakeDuration = 1500u;
@@ -51,7 +51,7 @@ const int upperPosition = +maxPosition;
 const int lowerPosition = -maxPosition;
 
 // Motor acceleration duration to full speed [us].
-unsigned long accelerationDuration = 500000ul;
+double accelerationDuration = 500000.0;
 
 // Point in time when the motor started accelerating [us].
 unsigned long accelerationStart = 0ul;
@@ -105,28 +105,33 @@ void loop()
     {   
         // Compute the current step rate [us].
         unsigned long elapsedAcceleration = micros() - accelerationStart;
-        unsigned long dt = (constrain(accelerationDuration / (double)elapsedAcceleration, 1.0, 1000.0) 
-                            * 1000000.0) / stepRate;
-
+        unsigned long currentStepRate = constrain(
+            maxStepRate * elapsedAcceleration / accelerationDuration,
+            0ul, maxStepRate);
+        unsigned long dt = 1000000.0 / currentStepRate;
+        
         // Step the motor, if a step is due.
-        if (micros() >= lastStep + dt)
-        {
-            // Step the motor.
-            digitalWrite(stepPin, HIGH);
-            delayMicroseconds(stepDuration);
-            digitalWrite(stepPin, LOW);
-
-            // Increment the position counter.
-            position += buttonUp.isPressed() - buttonDown.isPressed();
-
-            // Update the time of the last step command.
-            lastStep += dt;
-        }
+        if (elapsedAcceleration > 0ul)
+            if (micros() >= lastStep + dt)
+            {
+                // Step the motor.
+                digitalWrite(stepPin, HIGH);
+                delayMicroseconds(stepDuration);
+                digitalWrite(stepPin, LOW);
+    
+                // Increment the position counter.
+                position += buttonUp.isPressed();
+                position -= buttonDown.isPressed();
+    
+                // Update the time of the last step command.
+                lastStep += dt;
+            }
     }
 
     // Deactivate the motor.
     if (buttonUp.wasReleased() || buttonDown.wasReleased())
     {
+        // Send the motor driver to sleep.
         digitalWrite(wakePin, LOW);
         delayMicroseconds(sleepDuration);
     }
