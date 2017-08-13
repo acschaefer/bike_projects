@@ -3,7 +3,7 @@
 // Hardware:
 // The headlight trimmer consists of an Arduino Trinket, a stepper motor 
 // attached to the headlight trim adjustment skrew via a worm drive, the 
-// stepper motor driver, and a button.
+// stepper motor driver, and an up-neutral-down button.
 // 
 // Behavior:
 // When the up button is pressed, the motor turns the headlight trim adjustment 
@@ -38,23 +38,25 @@ const unsigned int sleepDuration = 100u;
 // Time the motor driver needs to recognize a step signal [us].
 const unsigned int stepDuration = 4u;
 
-// Point in time when the last step was triggered. The time is specified
-// relative to the time when the program was started [us].
+// Point in time when the last step was triggered [us]. The time is 
+// specified relative to the time when the program was started.
 unsigned long lastStep = 0ul;
 
 // Position of the motor in steps.
 int position = 0;
 
-// Maximum admissible position.
+// Maximum admissible number of steps.
 const int maxPosition = 1.5 * 200 * 23;
+const int upperPosition = +maxPosition;
+const int lowerPosition = -maxPosition;
 
-// Duration to full speed [us].
+// Motor acceleration duration to full speed [us].
 unsigned long accelerationDuration = 500000ul;
 
 // Point in time when the motor started accelerating [us].
 unsigned long accelerationStart = 0ul;
 
-// Tells if the motor turns.
+// True if the motor turns.
 boolean turn = false;
 
 // Buttons.
@@ -85,23 +87,26 @@ void loop()
     buttonDown.read();
     
     // Activate the motor.
-    if ((buttonUp.wasPressed() && position <= maxPosition)
-        || (buttonDown.wasPressed() && position >= -maxPosition))
+    if ((buttonUp.wasPressed() && position < upperPosition)
+        || (buttonDown.wasPressed() && position > -lowerPosition))
     {
+        // Wake the motor driver.
         digitalWrite(wakePin, HIGH);
         delayMicroseconds(wakeDuration);
+
+        // Memorize this time step as the start of motion.
         lastStep = micros();
         accelerationStart = lastStep;
     }
     
     // Step the motor.
-    if ((position >= -maxPosition && buttonDown.isPressed())
-        || (position <= maxPosition && buttonUp.isPressed()))
+    if ((position < upperPosition && buttonUp.isPressed())
+        || (position > lowerPosition && buttonDown.isPressed()))
     {   
         // Compute the current step rate [us].
         unsigned long elapsedAcceleration = micros() - accelerationStart;
         unsigned long dt = (constrain(accelerationDuration / (double)elapsedAcceleration, 1.0, 1000.0) 
-                            * 1000000) / stepRate;
+                            * 1000000.0) / stepRate;
 
         // Step the motor, if a step is due.
         if (micros() >= lastStep + dt)
