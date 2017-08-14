@@ -27,6 +27,10 @@ const byte buttonDownPin = 2;
 const byte wakePin = 0;
 const byte stepPin = 1;
 const byte dirPin = 4;
+const byte ledUpPin = 12;
+const byte ledDownPin = 15;
+const byte ledErrorPin = 9;
+const byte driverErrorPin = 5;
 
 // Step rate at maximum speed [Hz].
 const unsigned long maxSpeed = 23 * 200 / 3;
@@ -57,9 +61,17 @@ Button buttonDown(buttonDownPin, pullup, invert, debounceTime);
 // Set up the controller after boot.
 void setup()
 {
-    // Initialize the output pins.
+    // Initialize the motor driver output pins.
     pinMode(wakePin, OUTPUT);
     pinMode(stepPin, OUTPUT);
+
+    // Initialize the motor driver input pin.
+    pinMode(driverErrorPin, INPUT_PULLUP);
+    
+    // Initialize the status LEDs.
+    pinMode(ledUpPin, OUTPUT);
+    pinMode(ledDownPin, OUTPUT);
+    pinMode(ledErrorPin, OUTPUT);
 
     // Initialize the stepper motor.
     stepper.setMaxSpeed(maxSpeed);
@@ -88,7 +100,14 @@ void loop()
         stepper.moveTo(lowerPosition);
 
     // Turn the motor.
-    stepper.run();
+    boolean motorRunning = stepper.run();
+
+    // Light the corresponding LED.
+    digitalWrite(ledUpPin, buttonUp.isPressed() || motorRunning);
+    digitalWrite(ledDownPin, buttonDown.isPressed() || motorRunning);
+
+    // Read the motor driver status and light the corresponding LED.
+    digitalWrite(ledErrorPin, digitalRead(driverErrorPin));
 
     // Deactivate the motor driver.
     if (buttonUp.wasReleased() || buttonDown.wasReleased())
