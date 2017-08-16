@@ -22,15 +22,14 @@
 
 // Global constants and variables. /////////////////////////////////////////////
 // Pin numbers.
-const byte buttonUpPin = 3;
-const byte buttonDownPin = 2;
-const byte wakePin = 0;
-const byte stepPin = 1;
-const byte dirPin = 4;
-const byte ledUpPin = 12;
-const byte ledDownPin = 15;
-const byte ledErrorPin = 9;
-const byte driverErrorPin = 5;
+const byte buttonUpPin = 15;
+const byte buttonDownPin = 16;
+const byte wakePin = 5;
+const byte stepPin = 4;
+const byte dirPin = 3;
+const byte ledRunPin = 17;
+const byte ledErrorPin = 18;
+const byte driverStatusPin = 19;
 
 // Step rate at maximum speed [Hz].
 const float maxSpeed = 23.0f * 200.0f / 3.0f;
@@ -64,11 +63,10 @@ void setup()
     // Initialize the motor driver pins.
     pinMode(wakePin, OUTPUT);
     pinMode(stepPin, OUTPUT);
-    pinMode(driverErrorPin, INPUT_PULLUP);
+    pinMode(driverStatusPin, INPUT);
     
     // Initialize the status LEDs.
-    pinMode(ledUpPin, OUTPUT);
-    pinMode(ledDownPin, OUTPUT);
+    pinMode(ledRunPin, OUTPUT);
     pinMode(ledErrorPin, OUTPUT);
 
     // Initialize the stepper motor.
@@ -97,14 +95,11 @@ void loop()
     else if (buttonDown.wasPressed())
         stepper.moveTo(lowerPosition);
 
-    // Turn the motor.
-    stepper.run();
+    // Turn the motor and activate the motor LED.
+    digitalWrite(ledRunPin, stepper.run());
 
-    // Light the corresponding LEDs.
-    boolean direction = digitalRead(dirPin);
-    digitalWrite(ledUpPin, direction || stepper.isRunning());
-    digitalWrite(ledDownPin, !direction || stepper.isRunning());
-    digitalWrite(ledErrorPin, digitalRead(driverErrorPin));
+    // Light the error LED.
+    digitalWrite(ledErrorPin, !digitalRead(driverStatusPin));
 
     // Deactivate the motor driver.
     if (buttonUp.wasReleased() || buttonDown.wasReleased())
