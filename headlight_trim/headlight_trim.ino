@@ -100,13 +100,12 @@ void loop()
         stepper.moveTo(lowerPosition);
 
     // Turn the motor.
-    boolean motorRunning = stepper.run();
+    stepper.run();
 
-    // Light the corresponding LED.
-    digitalWrite(ledUpPin, buttonUp.isPressed() || motorRunning);
-    digitalWrite(ledDownPin, buttonDown.isPressed() || motorRunning);
-
-    // Read the motor driver status and light the corresponding LED.
+    // Light the corresponding LEDs.
+    boolean direction = digitalRead(dirPin);
+    digitalWrite(ledUpPin, direction || stepper.isRunning());
+    digitalWrite(ledDownPin, !direction || stepper.isRunning());
     digitalWrite(ledErrorPin, digitalRead(driverErrorPin));
 
     // Deactivate the motor driver.
