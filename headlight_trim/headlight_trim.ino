@@ -96,7 +96,7 @@ void loop()
     // Set the desired motor position.
     if (buttonUp.wasPressed())
         stepper.moveTo(upperPosition);
-    else if (buttonDown.isPressed())
+    else if (buttonDown.wasPressed())
         stepper.moveTo(lowerPosition);
 
     // Turn the motor.
