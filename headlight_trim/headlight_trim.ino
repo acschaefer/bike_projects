@@ -61,11 +61,9 @@ Button buttonDown(buttonDownPin, pullup, invert, debounceTime);
 // Set up the controller after boot.
 void setup()
 {
-    // Initialize the motor driver output pins.
+    // Initialize the motor driver pins.
     pinMode(wakePin, OUTPUT);
     pinMode(stepPin, OUTPUT);
-
-    // Initialize the motor driver input pin.
     pinMode(driverErrorPin, INPUT_PULLUP);
     
     // Initialize the status LEDs.
