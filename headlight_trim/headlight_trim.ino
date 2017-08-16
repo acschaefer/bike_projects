@@ -33,14 +33,14 @@ const byte ledErrorPin = 9;
 const byte driverErrorPin = 5;
 
 // Step rate at maximum speed [Hz].
-const unsigned long maxSpeed = 23 * 200 / 3;
+const float maxSpeed = 23.0f * 200.0f / 3.0f;
 
 // Acceleration duration to maximum speed.
-const double accelDuration = 1.0 / 3.0;
+const float accelDuration = 1.0f / 3.0f;
 
 // Duration needed to wake the motor driver and to set it asleep [us].
-const unsigned int wakeDuration = 1500u;
-const unsigned int sleepDuration = 100u;
+const unsigned long wakeDuration = 1500ul;
+const unsigned long sleepDuration = 100ul;
 
 // End stop of the stepper motor.
 const long maxPosition = 1.5 * 200 * 23;
