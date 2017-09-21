@@ -128,7 +128,7 @@ void loop()
     if (buttonUp.wasReleased() || buttonDown.wasReleased())
         stepper.stop();
 
-        // If the motor does not turn, send the motor driver to sleep.
+    // If the motor does not turn, send the motor driver to sleep.
     if (!running)
     {
         digitalWrite(wakePin, LOW);
