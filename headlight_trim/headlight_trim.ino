@@ -27,8 +27,8 @@ const byte buttonDownPin = 16;
 const byte wakePin = 5;
 const byte stepPin = 4;
 const byte dirPin = 3;
-const byte ledRunPin = 17;
-const byte ledErrorPin = 18;
+const byte ledRedPin = 17;
+const byte ledGreenPin = 18;
 const byte driverStatusPin = 19;
 
 // Step rate at maximum speed [Hz].
@@ -45,6 +45,9 @@ const unsigned long sleepDuration = 100ul;
 const long maxPosition = 1.5 * 200 * 23;
 const long upperPosition = +maxPosition;
 const long lowerPosition = -maxPosition;
+
+// Motor status.
+bool running = false;
 
 // Stepper motor.
 AccelStepper stepper(AccelStepper::DRIVER, stepPin, dirPin);
@@ -66,8 +69,8 @@ void setup()
     pinMode(driverStatusPin, INPUT);
     
     // Initialize the status LEDs.
-    pinMode(ledRunPin, OUTPUT);
-    pinMode(ledErrorPin, OUTPUT);
+    pinMode(ledRedPin, OUTPUT);
+    pinMode(ledGreenPin, OUTPUT);
 
     // Initialize the stepper motor.
     stepper.setMaxSpeed(maxSpeed);
@@ -95,19 +98,40 @@ void loop()
     else if (buttonDown.wasPressed())
         stepper.moveTo(lowerPosition);
 
-    // Turn the motor and activate the motor LED.
-    digitalWrite(ledRunPin, stepper.run());
+    // Turn the motor.
+    running = stepper.run();
 
-    // Light the error LED.
-    digitalWrite(ledErrorPin, !digitalRead(driverStatusPin));
-
-    // Deactivate the motor driver.
-    if (buttonUp.wasReleased() || buttonDown.wasReleased())
+    // Display the motor status using the dual LED.
+    if (running)
     {
-        // Send the motor driver to sleep.
+        if (digitalRead(driverStatusPin))
+        {
+            // Show yellow.
+            digitalWrite(ledGreenPin, HIGH);
+            digitalWrite(ledRedPin, HIGH);
+        }
+        else
+        {
+            // Show red.
+            digitalWrite(ledGreenPin, LOW);
+            digitalWrite(ledRedPin, HIGH);
+        }
+    }
+    else
+    {
+        // Show green.
+        digitalWrite(ledGreenPin, HIGH);
+        digitalWrite(ledRedPin, LOW);
+    }
+
+    // If the button was released, stop the motor.
+    if (buttonUp.wasReleased() || buttonDown.wasReleased())
         stepper.stop();
+
+        // If the motor does not turn, send the motor driver to sleep.
+    if (!running)
+    {
         digitalWrite(wakePin, LOW);
         delayMicroseconds(sleepDuration);
     }
 }
-
